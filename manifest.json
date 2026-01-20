@@ -1,20 +1,24 @@
 {
   "name": "爱心应用",
   "short_name": "爱心",
+  "description": "一个表达爱意的应用",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffafbd",
   "theme_color": "#ff6b8b",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

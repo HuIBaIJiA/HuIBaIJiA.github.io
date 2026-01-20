@@ -1,5 +1,5 @@
 {
-  "name": "爱心应用",
+  "name": "Love",
   "short_name": "爱心",
   "description": "一个表达爱意的应用",
   "start_url": ".",
@@ -22,3 +22,4 @@
     }
   ]
 }
+

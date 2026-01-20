@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>爱心应用</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 登录界面 */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto 0;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            color: #ff6b8b;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff6b8b;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ff6b8b, #ff8e53);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error {
+            color: #ff4757;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* 爱心动画 */
+        .hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 24px;
+            color: #ff6b8b;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* 主菜单 */
+        .header {
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .user-info {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .menu {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .menu-item {
+            background: white;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .menu-item:hover {
+            transform: translateX(10px);
+        }
+
+        .menu-item h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .menu-item p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 消息界面 */
+        .back-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .message-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+
+        .save-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .messages-list {
+            margin-top: 30px;
+        }
+
+        .message-item {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-date {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .message-content {
+            color: #333;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="logo">❤️ 爱心应用 ❤️</div>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="请输入用户名" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="请输入密码" autocomplete="off">
+            </div>
+            <button class="login-btn" onclick="login()">登录</button>
+            <div id="login-error" class="error">用户名或密码错误</div>
+        </div>
+    </div>
+
+    <!-- 爱心动画容器 -->
+    <div id="hearts-container" class="hearts-container"></div>
+
+    <!-- 主菜单 -->
+    <div id="main-menu" class="screen">
+        <div class="header">
+            <div class="user-info" id="welcome-text"></div>
+            <p>❤️ 欢迎使用爱心应用 ❤️</p>
+        </div>
+        <div class="menu" id="menu-container">
+            <div class="menu-item" onclick="showMessageScreen()">
+                <h3>📝 想对xyb说的话</h3>
+                <p>写下你想说的话并保存</p>
+            </div>
+            <!-- 已保存的消息会动态添加到这里 -->
+        </div>
+    </div>
+
+    <!-- 消息界面 -->
+    <div id="message-screen" class="screen">
+        <button class="back-btn" onclick="showMainMenu()">← 返回</button>
+        <h2>💌 想对xyb说的话</h2>
+        <textarea id="message-input" class="message-input" placeholder="在这里写下你想说的话..."></textarea>
+        <button class="save-btn" onclick="saveMessage()">保存消息</button>
+        
+        <div class="messages-list" id="messages-list">
+            <!-- 已保存的消息会显示在这里 -->
+        </div>
+    </div>
+
+    <script>
+        // 用户验证
+        const CORRECT_USERNAME = "朱籽橦";
+        const CORRECT_PASSWORD = "zztLOVExyb";
+
+        // 模拟数据库（实际使用时需要替换为真实的API）
+        let messages = JSON.parse(localStorage.getItem('love_messages') || '[]');
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('login-error');
+
+            if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
+                errorElement.style.display = 'none';
+                
+                // 显示爱心动画
+                showHeartsAnimation();
+                
+                // 2秒后显示主菜单
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.remove('active');
+                    document.getElementById('main-menu').classList.add('active');
+                    document.getElementById('welcome-text').textContent = `欢迎，${username}！`;
+                    loadMenuItems();
+                }, 2000);
+            } else {
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function showHeartsAnimation() {
+            const container = document.getElementById('hearts-container');
+            const heartCount = 50;
+            
+            for (let i = 0; i < heartCount; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart';
+                    heart.textContent = '❤️';
+                    
+                    // 随机位置
+                    const left = Math.random() * 100;
+                    const duration = 2 + Math.random() * 1;
+                    const delay = Math.random() * 2;
+                    
+                    heart.style.left = `${left}%`;
+                    heart.style.animationDuration = `${duration}s`;
+                    heart.style.animationDelay = `${delay}s`;
+                    
+                    container.appendChild(heart);
+                    
+                    // 动画结束后移除元素
+                    setTimeout(() => {
+                        heart.remove();
+                    }, (duration + delay) * 1000);
+                }, i * 40);
+            }
+        }
+
+        function showMessageScreen() {
+            document.getElementById('main-menu').classList.remove('active');
+            document.getElementById('message-screen').classList.add('active');
+            loadMessages();
+        }
+
+        function showMainMenu() {
+            document.getElementById('message-screen').classList.remove('active');
+            document.getElementById('main-menu').classList.add('active');
+        }
+
+        function saveMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('请输入内容');
+                return;
+            }
+            
+            const newMessage = {
+                id: Date.now(),
+                content: message,
+                date: new Date().toLocaleString('zh-CN'),
+                username: CORRECT_USERNAME
+            };
+            
+            messages.push(newMessage);
+            
+            // 保存到本地存储（实际应用中应该发送到服务器）
+            localStorage.setItem('love_messages', JSON.stringify(messages));
+            
+            // 同步到模拟服务器（这里只是演示）
+            syncToServer(newMessage);
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 重新加载消息
+            loadMessages();
+            loadMenuItems();
+            
+            alert('消息已保存！');
+        }
+
+        function loadMessages() {
+            const container = document.getElementById('messages-list');
+            container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message-item';
+                messageElement.innerHTML = `
+                    <div class="message-date">📅 ${msg.date}</div>
+                    <div class="message-content">${msg.content}</div>
+                `;
+                container.appendChild(messageElement);
+            });
+        }
+
+        function loadMenuItems() {
+            const container = document.getElementById('menu-container');
+            // 清除旧的动态菜单项（保留第一个固定项）
+            while (container.children.length > 1) {
+                container.removeChild(container.lastChild);
+            }
+            
+            // 为每条消息创建一个菜单项
+            messages.forEach((msg, index) => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.innerHTML = `
+                    <h3>💌 第${index + 1}条留言</h3>
+                    <p>${msg.date}</p>
+                `;
+                menuItem.onclick = () => {
+                    showMessageScreen();
+                    // 这里可以滚动到特定消息
+                };
+                container.appendChild(menuItem);
+            });
+        }
+
+        // 模拟服务器同步（实际使用时需要替换为真实的API调用）
+        function syncToServer(message) {
+            // 这里应该是一个实际的API请求
+            console.log('同步消息到服务器:', message);
+            // 示例：fetch('https://your-api.com/messages', { method: 'POST', body: JSON.stringify(message) })
+        }
+
+        // 页面加载时检查登录状态
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查是否已登录（示例逻辑）
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            if (isLoggedIn) {
+                document.getElementById('login-screen').classList.remove('active');
+                document.getElementById('main-menu').classList.add('active');
+                loadMenuItems();
+            }
+        });
+    </script>
+</body>
+</html>

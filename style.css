@@ -1,0 +1,476 @@
+/* style.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+/* 屏幕切换控制 */
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 登录界面样式 */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto 0;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    text-align: center;
+    font-size: 28px;
+    color: #ff6b8b;
+    margin-bottom: 30px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #ff6b8b;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.1);
+}
+
+.input-group label {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.input-group input:focus + label,
+.input-group input:not(:placeholder-shown) + label {
+    top: -10px;
+    left: 10px;
+    font-size: 12px;
+    color: #ff6b8b;
+    background: white;
+    padding: 0 5px;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(45deg, #ff6b8b, #ff8e53);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(255, 107, 139, 0.3);
+}
+
+.login-btn:active {
+    transform: translateY(-1px);
+}
+
+.login-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.login-btn:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(50, 50);
+        opacity: 0;
+    }
+}
+
+.error {
+    color: #ff4757;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    padding: 10px;
+    background: rgba(255, 71, 87, 0.1);
+    border-radius: 8px;
+    display: none;
+}
+
+/* 爱心动画效果 */
+.hearts-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.heart {
+    position: absolute;
+    font-size: 28px;
+    color: #ff6b8b;
+    animation: fall linear forwards;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    user-select: none;
+    z-index: 1000;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-50px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(calc(100vh + 50px)) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* 主菜单样式 */
+.header {
+    text-align: center;
+    padding: 30px 20px;
+    color: white;
+    background: linear-gradient(135deg, rgba(255, 107, 139, 0.9), rgba(255, 142, 83, 0.9));
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(255, 107, 139, 0.3);
+}
+
+.user-info {
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.menu {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.menu-item {
+    background: white;
+    margin: 15px 0;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 5px solid #ff6b8b;
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 139, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.menu-item:hover {
+    transform: translateX(15px) translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item:hover::before {
+    left: 100%;
+}
+
+.menu-item h3 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-item p {
+    color: #666;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* 消息界面样式 */
+.back-btn {
+    background: linear-gradient(45deg, #4a90e2, #357ae8);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    margin-bottom: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+.back-btn:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+.message-input {
+    width: 100%;
+    min-height: 200px;
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    font-size: 16px;
+    margin: 20px 0;
+    resize: vertical;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.message-input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.save-btn {
+    background: linear-gradient(45deg, #4a90e2, #357ae8);
+    color: white;
+    border: none;
+    padding: 16px 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0 auto 40px;
+    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
+}
+
+.save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(74, 144, 226, 0.4);
+}
+
+.save-btn:active {
+    transform: translateY(-1px);
+}
+
+.messages-list {
+    margin-top: 40px;
+}
+
+.message-item {
+    background: white;
+    padding: 25px;
+    margin: 20px 0;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #4a90e2;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.message-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.message-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #4a90e2, #357ae8);
+}
+
+.message-date {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.message-content {
+    color: #333;
+    line-height: 1.7;
+    font-size: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .login-container {
+        margin: 50px auto 0;
+        padding: 30px 25px;
+    }
+    
+    .logo {
+        font-size: 24px;
+    }
+    
+    .user-info {
+        font-size: 22px;
+    }
+    
+    .menu-item {
+        padding: 20px;
+    }
+    
+    .menu-item h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .login-container {
+        margin: 30px auto 0;
+        padding: 25px 20px;
+    }
+    
+    .header {
+        padding: 20px 15px;
+    }
+    
+    .menu {
+        padding: 0 10px;
+    }
+    
+    .save-btn {
+        width: 100%;
+        padding: 16px;
+    }
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-state img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #ff6b8b, #ff8e53);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #ff5c7f, #ff7c40);
+}

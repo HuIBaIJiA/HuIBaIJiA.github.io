@@ -28,7 +28,7 @@
             <div class="input-group">
                 <input type="password" id="password" placeholder="请输入密码" autocomplete="off">
             </div>
-            <button class="login-btn" onclick="login()">登录</button>
+            <button class="login-btn" id="login-button">登录</button>
             <div id="login-error" class="error">用户名或密码错误</div>
         </div>
     </div>
@@ -43,7 +43,7 @@
             <p>❤️ 欢迎使用爱心应用 ❤️</p>
         </div>
         <div class="menu" id="menu-container">
-            <div class="menu-item" onclick="showMessageScreen()">
+            <div class="menu-item" id="new-message-btn">
                 <h3>📝 想对xyb说的话</h3>
                 <p>写下你想说的话并保存</p>
             </div>
@@ -53,10 +53,17 @@
 
     <!-- 消息界面 -->
     <div id="message-screen" class="screen">
-        <button class="back-btn" onclick="showMainMenu()">← 返回</button>
+        <button class="back-btn" id="back-button">← 返回</button>
         <h2>💌 想对xyb说的话</h2>
         <textarea id="message-input" class="message-input" placeholder="在这里写下你想说的话..."></textarea>
-        <button class="save-btn" onclick="saveMessage()">保存消息</button>
+        
+        <!-- 修改后的保存按钮 -->
+        <button class="save-btn" id="save-button">保存消息</button>
+        
+        <!-- 测试按钮 -->
+        <button id="test-button" style="background: #4CAF50; color: white; padding: 10px 20px; margin-top: 10px; border: none; border-radius: 5px;">
+            测试按钮
+        </button>
         
         <div class="messages-list" id="messages-list">
             <!-- 已保存的消息会显示在这里 -->
@@ -64,6 +71,7 @@
     </div>
 
     <script>
+        // ==================== 配置部分 ====================
         // 用户验证
         const CORRECT_USERNAME = "朱籽橦";
         const CORRECT_PASSWORD = "zztLOVExyb";
@@ -79,36 +87,147 @@
         };
 
         // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('✅ Firebase初始化成功');
+        } catch (error) {
+            console.error('❌ Firebase初始化失败:', error);
+        }
 
         // 本地消息存储
-        let messages = JSON.parse(localStorage.getItem('love_messages') || '[]');
+        let messages = [];
 
+        // ==================== 页面加载初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 页面加载完成，开始初始化...');
+            
+            // 绑定所有按钮事件
+            bindAllButtons();
+            
+            // 加载本地消息
+            loadLocalMessages();
+            
+            // 检查登录状态
+            checkLoginStatus();
+            
+            // 测试：显示所有重要元素
+            console.log('📋 元素检查:');
+            console.log('- 登录按钮:', document.getElementById('login-button'));
+            console.log('- 保存按钮:', document.getElementById('save-button'));
+            console.log('- 输入框:', document.getElementById('message-input'));
+            console.log('- 消息列表:', document.getElementById('messages-list'));
+            console.log('- 返回按钮:', document.getElementById('back-button'));
+            console.log('- 新建消息按钮:', document.getElementById('new-message-btn'));
+        });
+
+        // ==================== 按钮绑定函数 ====================
+        function bindAllButtons() {
+            console.log('🔗 绑定按钮事件...');
+            
+            // 1. 登录按钮
+            const loginBtn = document.getElementById('login-button');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', login);
+                console.log('✅ 登录按钮绑定成功');
+            }
+            
+            // 2. 保存按钮
+            const saveBtn = document.getElementById('save-button');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    console.log('💾 保存按钮被点击');
+                    saveMessage();
+                });
+                console.log('✅ 保存按钮绑定成功');
+            }
+            
+            // 3. 返回按钮
+            const backBtn = document.getElementById('back-button');
+            if (backBtn) {
+                backBtn.addEventListener('click', showMainMenu);
+                console.log('✅ 返回按钮绑定成功');
+            }
+            
+            // 4. 新建消息按钮
+            const newMsgBtn = document.getElementById('new-message-btn');
+            if (newMsgBtn) {
+                newMsgBtn.addEventListener('click', showMessageScreen);
+                console.log('✅ 新建消息按钮绑定成功');
+            }
+            
+            // 5. 测试按钮
+            const testBtn = document.getElementById('test-button');
+            if (testBtn) {
+                testBtn.addEventListener('click', function() {
+                    alert('✅ 测试按钮点击正常！\n保存按钮应该也能工作了！');
+                    console.log('✅ 测试按钮被点击');
+                });
+                console.log('✅ 测试按钮绑定成功');
+            }
+            
+            // 6. 回车键保存消息
+            const messageInput = document.getElementById('message-input');
+            if (messageInput) {
+                messageInput.addEventListener('keydown', function(event) {
+                    if (event.ctrlKey && event.key === 'Enter') {
+                        console.log('⌨️ Ctrl+Enter 保存消息');
+                        saveMessage();
+                    }
+                });
+            }
+        }
+
+        // ==================== 登录功能 ====================
         function login() {
+            console.log('🔐 尝试登录...');
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorElement = document.getElementById('login-error');
 
+            console.log('📝 输入的用户名:', username, '密码长度:', password.length);
+
             if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
+                console.log('✅ 登录成功');
                 errorElement.style.display = 'none';
+                
+                // 保存登录状态
+                localStorage.setItem('is_logged_in', 'true');
+                localStorage.setItem('username', username);
+                
                 showHeartsAnimation();
                 
                 setTimeout(() => {
                     document.getElementById('login-screen').classList.remove('active');
                     document.getElementById('main-menu').classList.add('active');
                     document.getElementById('welcome-text').textContent = `欢迎，${username}！`;
-                    loadMenuItems();
                     loadMessagesFromFirebase();
                 }, 2000);
             } else {
+                console.log('❌ 登录失败');
                 errorElement.style.display = 'block';
             }
         }
 
+        function checkLoginStatus() {
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            const username = localStorage.getItem('username');
+            
+            if (isLoggedIn === 'true' && username) {
+                console.log('✅ 检测到已登录状态，用户:', username);
+                document.getElementById('login-screen').classList.remove('active');
+                document.getElementById('main-menu').classList.add('active');
+                document.getElementById('welcome-text').textContent = `欢迎回来，${username}！`;
+                loadMessagesFromFirebase();
+            }
+        }
+
+        // ==================== 爱心动画 ====================
         function showHeartsAnimation() {
+            console.log('💖 显示爱心动画');
             const container = document.getElementById('hearts-container');
-            const heartCount = 50;
+            const heartCount = 30;
             
             for (let i = 0; i < heartCount; i++) {
                 setTimeout(() => {
@@ -117,8 +236,8 @@
                     heart.textContent = '❤️';
                     
                     const left = Math.random() * 100;
-                    const duration = 2 + Math.random() * 1;
-                    const delay = Math.random() * 2;
+                    const duration = 1.5 + Math.random() * 1;
+                    const delay = Math.random() * 1;
                     
                     heart.style.left = `${left}%`;
                     heart.style.animationDuration = `${duration}s`;
@@ -127,148 +246,279 @@
                     container.appendChild(heart);
                     
                     setTimeout(() => {
-                        heart.remove();
+                        if (heart.parentNode === container) {
+                            heart.remove();
+                        }
                     }, (duration + delay) * 1000);
-                }, i * 40);
+                }, i * 50);
             }
         }
 
+        // ==================== 消息管理 ====================
         async function loadMessagesFromFirebase() {
+            console.log('☁️ 从Firebase加载消息...');
+            if (!db) {
+                console.error('❌ Firestore数据库未初始化');
+                loadLocalMessages();
+                return;
+            }
+            
             try {
                 const querySnapshot = await db.collection('love_messages')
                     .orderBy('timestamp', 'desc')
+                    .limit(50)
                     .get();
+                
+                console.log(`✅ 从Firebase获取到 ${querySnapshot.size} 条消息`);
                 
                 messages = [];
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
+                    const timestamp = data.timestamp ? data.timestamp.toDate() : new Date();
                     messages.push({
                         id: doc.id,
-                        ...data,
-                        date: data.date || new Date(data.timestamp?.toDate()).toLocaleString('zh-CN')
+                        username: data.username || CORRECT_USERNAME,
+                        content: data.content || '',
+                        date: data.date || timestamp.toLocaleString('zh-CN'),
+                        timestamp: timestamp
                     });
                 });
                 
+                // 保存到本地存储
                 localStorage.setItem('love_messages', JSON.stringify(messages));
+                
+                // 更新界面
                 displayMessages();
                 updateMenuItems();
                 
             } catch (error) {
-                console.error('云端加载失败:', error);
-                messages = JSON.parse(localStorage.getItem('love_messages') || '[]');
-                displayMessages();
-                updateMenuItems();
+                console.error('❌ 从Firebase加载失败:', error);
+                loadLocalMessages();
             }
         }
 
-        async function saveMessageToFirebase() {
+        function loadLocalMessages() {
+            console.log('💾 从本地存储加载消息');
+            try {
+                const saved = localStorage.getItem('love_messages');
+                messages = saved ? JSON.parse(saved) : [];
+                console.log(`✅ 加载 ${messages.length} 条本地消息`);
+                displayMessages();
+                updateMenuItems();
+            } catch (error) {
+                console.error('❌ 加载本地消息失败:', error);
+                messages = [];
+            }
+        }
+
+        // ==================== 保存消息 ====================
+        async function saveMessage() {
+            console.log('💾 开始保存消息...');
+            
+            // 1. 获取输入框
             const input = document.getElementById('message-input');
+            if (!input) {
+                alert('❌ 系统错误：找不到输入框');
+                console.error('❌ 找不到message-input元素');
+                return;
+            }
+            
             const message = input.value.trim();
+            console.log('📝 消息内容:', message ? `"${message}"` : '空内容');
             
             if (!message) {
                 alert('请输入内容');
                 return;
             }
             
+            // 2. 显示正在保存提示
+            const saveBtn = document.getElementById('save-button');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '保存中...';
+            saveBtn.disabled = true;
+            
+            // 3. 保存到Firebase
             const messageData = {
                 username: CORRECT_USERNAME,
                 content: message,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                date: new Date().toLocaleString('zh-CN')
+                date: new Date().toLocaleString('zh-CN'),
+                from: 'zzt',
+                device: navigator.userAgent.substring(0, 50)
             };
             
+            console.log('📤 准备保存到Firebase:', messageData);
+            
             try {
-                await db.collection('love_messages').add(messageData);
+                // 保存到Firebase
+                const docRef = await db.collection('love_messages').add(messageData);
+                console.log('✅ 保存成功，文档ID:', docRef.id);
                 
-                // 添加到本地
+                // 添加到本地数组
                 messages.unshift({
-                    id: Date.now().toString(),
-                    ...messageData
+                    id: docRef.id,
+                    ...messageData,
+                    date: messageData.date
                 });
                 
+                // 保存到本地存储
                 localStorage.setItem('love_messages', JSON.stringify(messages));
+                
+                // 清空输入框
                 input.value = '';
+                
+                // 更新界面
                 displayMessages();
                 updateMenuItems();
                 
-                alert('💌 消息已保存到云端！xyb现在就能看到！');
+                // 恢复按钮状态
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+                
+                alert('💌 消息已保存到云端！\nxyb现在就能看到！');
                 
             } catch (error) {
-                console.error('保存失败:', error);
-                alert('网络有问题，已保存到本地');
+                console.error('❌ 保存到Firebase失败:', error);
                 
-                // 本地备份
-                messageData.timestamp = new Date();
-                messages.unshift({
-                    id: Date.now().toString(),
-                    ...messageData
-                });
-                localStorage.setItem('love_messages', JSON.stringify(messages));
-                displayMessages();
-                updateMenuItems();
+                // 保存到本地
+                saveToLocal(message);
+                
+                // 恢复按钮状态
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
             }
         }
 
+        function saveToLocal(message) {
+            console.log('💾 保存到本地存储');
+            const messageData = {
+                id: 'local_' + Date.now(),
+                username: CORRECT_USERNAME,
+                content: message,
+                date: new Date().toLocaleString('zh-CN'),
+                timestamp: new Date(),
+                isLocal: true
+            };
+            
+            messages.unshift(messageData);
+            localStorage.setItem('love_messages', JSON.stringify(messages));
+            
+            const input = document.getElementById('message-input');
+            input.value = '';
+            
+            displayMessages();
+            updateMenuItems();
+            
+            alert('💾 消息已保存到本地\n（网络恢复后会同步到云端）');
+        }
+
+        // ==================== 界面更新 ====================
         function displayMessages() {
+            console.log('🔄 显示消息，数量:', messages.length);
             const container = document.getElementById('messages-list');
+            if (!container) {
+                console.error('❌ 找不到messages-list容器');
+                return;
+            }
+            
             container.innerHTML = '';
             
-            messages.forEach(msg => {
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
+                        <h3>还没有消息</h3>
+                        <p>写第一条消息吧~</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            messages.forEach((msg, index) => {
                 const messageElement = document.createElement('div');
                 messageElement.className = 'message-item';
                 messageElement.innerHTML = `
-                    <div class="message-date">📅 ${msg.date}</div>
-                    <div class="message-content">${msg.content}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="message-date">📅 ${msg.date || '未知时间'}</div>
+                        ${msg.isLocal ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">本地</span>' : ''}
+                    </div>
+                    <div class="message-content">${msg.content || ''}</div>
                 `;
                 container.appendChild(messageElement);
             });
         }
 
         function updateMenuItems() {
+            console.log('🔄 更新菜单项，消息数量:', messages.length);
             const container = document.getElementById('menu-container');
-            while (container.children.length > 1) {
-                container.removeChild(container.lastChild);
+            if (!container) {
+                console.error('❌ 找不到menu-container容器');
+                return;
             }
             
-            messages.forEach((msg, index) => {
+            // 移除旧的动态项，保留第一个固定项
+            const children = container.children;
+            const fixedItems = 1; // 第一个是固定项
+            
+            while (children.length > fixedItems) {
+                container.removeChild(children[children.length - 1]);
+            }
+            
+            // 添加消息项（最多显示10条）
+            const displayCount = Math.min(messages.length, 10);
+            for (let i = 0; i < displayCount; i++) {
+                const msg = messages[i];
                 const menuItem = document.createElement('div');
                 menuItem.className = 'menu-item';
                 menuItem.innerHTML = `
-                    <h3>💌 第${index + 1}条留言</h3>
-                    <p>${msg.date}</p>
+                    <h3>💌 ${i === 0 ? '最新留言' : `第${i + 1}条留言`}</h3>
+                    <p>${msg.date ? msg.date.substring(0, 16) : '未知时间'}</p>
                 `;
                 menuItem.onclick = () => showMessageScreen();
                 container.appendChild(menuItem);
-            });
+            }
         }
 
+        // ==================== 屏幕切换 ====================
         function showMessageScreen() {
+            console.log('📱 切换到消息屏幕');
             document.getElementById('main-menu').classList.remove('active');
             document.getElementById('message-screen').classList.add('active');
             displayMessages();
+            
+            // 自动聚焦到输入框
+            setTimeout(() => {
+                const input = document.getElementById('message-input');
+                if (input) input.focus();
+            }, 300);
         }
 
         function showMainMenu() {
+            console.log('📱 切换到主菜单');
             document.getElementById('message-screen').classList.remove('active');
             document.getElementById('main-menu').classList.add('active');
         }
 
-        function saveMessage() {
-            saveMessageToFirebase();
-        }
+        // ==================== 调试工具 ====================
+        window.debugApp = function() {
+            console.log('=== 应用调试信息 ===');
+            console.log('Firebase状态:', firebase.apps.length > 0 ? '✅ 已初始化' : '❌ 未初始化');
+            console.log('Firestore数据库:', db ? '✅ 可用' : '❌ 不可用');
+            console.log('消息数量:', messages.length);
+            console.log('本地存储:', localStorage.getItem('love_messages') ? '✅ 有数据' : '❌ 无数据');
+            console.log('登录状态:', localStorage.getItem('is_logged_in'));
+            console.log('用户名:', localStorage.getItem('username'));
+            console.log('==================');
+            
+            // 显示所有消息
+            console.log('所有消息:', messages);
+        };
 
-        function loadMenuItems() {
-            updateMenuItems();
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const isLoggedIn = localStorage.getItem('is_logged_in');
-            if (isLoggedIn) {
-                document.getElementById('login-screen').classList.remove('active');
-                document.getElementById('main-menu').classList.add('active');
-                loadMessagesFromFirebase();
-            }
-        });
+        // 3秒后自动调试
+        setTimeout(() => {
+            console.log('🛠️ 自动调试信息:');
+            window.debugApp();
+        }, 3000);
     </script>
 </body>
 </html>

@@ -312,105 +312,124 @@
         }
 
         // ==================== 保存消息 ====================
-        async function saveMessage() {
-            console.log('💾 开始保存消息...');
+async function saveMessage() {
+    console.log('💾 开始保存消息...');
+    
+    // 1. 获取输入框
+    const input = document.getElementById('message-input');
+    if (!input) {
+        alert('❌ 系统错误：找不到输入框');
+        console.error('❌ 找不到message-input元素');
+        return;
+    }
+    
+    const message = input.value.trim();
+    console.log('📝 消息内容:', message ? `"${message}"` : '空内容');
+    
+    if (!message) {
+        alert('请输入内容');
+        return;
+    }
+    
+    // 2. 显示正在保存提示
+    const saveBtn = document.getElementById('save-button');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = '保存中...';
+    saveBtn.disabled = true;
+    
+    // 3. 设置超时保护 - 关键修复！
+    let isCompleted = false;
+    const timeoutId = setTimeout(() => {
+        if (!isCompleted) {
+            console.log('⏰ 保存超时，强制恢复按钮');
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+            alert('⚠️ 网络连接超时，消息已保存到本地\n网络恢复后会自动同步');
+        }
+    }, 8000); // 8秒超时
+    
+    // 4. 先保存到本地（确保数据不丢失）
+    const localMessageData = {
+        id: 'local_' + Date.now(),
+        username: CORRECT_USERNAME,
+        content: message,
+        date: new Date().toLocaleString('zh-CN'),
+        timestamp: new Date(),
+        isLocal: true
+    };
+    
+    messages.unshift(localMessageData);
+    localStorage.setItem('love_messages', JSON.stringify(messages));
+    
+    // 清空输入框并更新界面
+    input.value = '';
+    displayMessages();
+    updateMenuItems();
+    
+    // 5. 尝试保存到Firebase（异步，不阻塞）
+    if (db) {
+        const messageData = {
+            username: CORRECT_USERNAME,
+            content: message,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            date: new Date().toLocaleString('zh-CN'),
+            from: 'zzt',
+            device: navigator.userAgent.substring(0, 50)
+        };
+        
+        console.log('📤 尝试保存到Firebase...');
+        
+        // 使用Promise.race实现超时
+        const firebasePromise = db.collection('love_messages').add(messageData);
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Firebase超时')), 5000);
+        });
+        
+        try {
+            const docRef = await Promise.race([firebasePromise, timeoutPromise]);
+            console.log('✅ Firebase保存成功，文档ID:', docRef.id);
             
-            // 1. 获取输入框
-            const input = document.getElementById('message-input');
-            if (!input) {
-                alert('❌ 系统错误：找不到输入框');
-                console.error('❌ 找不到message-input元素');
-                return;
-            }
-            
-            const message = input.value.trim();
-            console.log('📝 消息内容:', message ? `"${message}"` : '空内容');
-            
-            if (!message) {
-                alert('请输入内容');
-                return;
-            }
-            
-            // 2. 显示正在保存提示
-            const saveBtn = document.getElementById('save-button');
-            const originalText = saveBtn.textContent;
-            saveBtn.textContent = '保存中...';
-            saveBtn.disabled = true;
-            
-            // 3. 保存到Firebase
-            const messageData = {
-                username: CORRECT_USERNAME,
-                content: message,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                date: new Date().toLocaleString('zh-CN'),
-                from: 'zzt',
-                device: navigator.userAgent.substring(0, 50)
-            };
-            
-            console.log('📤 准备保存到Firebase:', messageData);
-            
-            try {
-                // 保存到Firebase
-                const docRef = await db.collection('love_messages').add(messageData);
-                console.log('✅ 保存成功，文档ID:', docRef.id);
-                
-                // 添加到本地数组
-                messages.unshift({
-                    id: docRef.id,
-                    ...messageData,
-                    date: messageData.date
-                });
-                
-                // 保存到本地存储
+            // 更新本地消息，标记为已同步
+            const localMsg = messages.find(m => m.content === message && m.isLocal);
+            if (localMsg) {
+                localMsg.isLocal = false;
+                localMsg.id = docRef.id;
                 localStorage.setItem('love_messages', JSON.stringify(messages));
-                
-                // 清空输入框
-                input.value = '';
-                
-                // 更新界面
-                displayMessages();
-                updateMenuItems();
-                
-                // 恢复按钮状态
+            }
+            
+            if (!isCompleted) {
+                isCompleted = true;
+                clearTimeout(timeoutId);
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
-                
                 alert('💌 消息已保存到云端！\nxyb现在就能看到！');
-                
-            } catch (error) {
-                console.error('❌ 保存到Firebase失败:', error);
-                
-                // 保存到本地
-                saveToLocal(message);
-                
-                // 恢复按钮状态
+            }
+            
+        } catch (error) {
+            console.error('⚠️ Firebase保存失败（已保存到本地）:', error);
+            
+            if (!isCompleted) {
+                isCompleted = true;
+                clearTimeout(timeoutId);
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
+                // 不重复弹窗，因为已经提示过了
             }
         }
-
-        function saveToLocal(message) {
-            console.log('💾 保存到本地存储');
-            const messageData = {
-                id: 'local_' + Date.now(),
-                username: CORRECT_USERNAME,
-                content: message,
-                date: new Date().toLocaleString('zh-CN'),
-                timestamp: new Date(),
-                isLocal: true
-            };
-            
-            messages.unshift(messageData);
-            localStorage.setItem('love_messages', JSON.stringify(messages));
-            
-            const input = document.getElementById('message-input');
-            input.value = '';
-            
-            displayMessages();
-            updateMenuItems();
-            
-            alert('💾 消息已保存到本地\n（网络恢复后会同步到云端）');
-        }
+    } else {
+        // Firebase不可用，只保存到本地
+        console.log('⚠️ Firebase不可用，仅保存到本地');
+        setTimeout(() => {
+            if (!isCompleted) {
+                isCompleted = true;
+                clearTimeout(timeoutId);
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+                alert('💾 消息已保存到本地\n（云端服务暂不可用）');
+            }
+        }, 500);
+    }
+}
 
         // ==================== 界面更新 ====================
         function displayMessages() {

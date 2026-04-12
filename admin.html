@@ -6,51 +6,16 @@
     <title>管理员端 - 爱心留言板</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; }
-        .login-box, .admin-panel {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            margin-top: 50px;
-        }
+        .login-box, .admin-panel { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-top: 50px; }
         h2 { text-align: center; color: #764ba2; margin-bottom: 30px; }
         input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
-        button {
-            width: 100%; padding: 15px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .message-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 5px solid #764ba2;
-        }
+        button { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .message-card { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 5px solid #764ba2; }
         .message-time { color: #666; font-size: 14px; margin-bottom: 10px; }
         .message-content { font-size: 16px; line-height: 1.5; white-space: pre-wrap; }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+        .stats { display: flex; justify-content: space-between; align-items: center; background: #f0f0f0; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         .error { color: red; text-align: center; margin-top: 15px; display: none; }
         .back-btn { background: #6c757d; margin-top: 0; margin-bottom: 20px; }
         .refresh-btn { width: auto; padding: 8px 20px; margin: 0; background: #28a745; }
@@ -74,20 +39,17 @@
             <span>📊 总留言数：<strong id="totalCount">0</strong></span>
             <button class="refresh-btn" onclick="loadMessages()">🔄 刷新</button>
         </div>
-        <div id="messagesList">
-            <div style="text-align:center; padding:40px; color:#999;">暂无留言</div>
-        </div>
+        <div id="messagesList"><div style="text-align:center; padding:40px; color:#999;">暂无留言</div></div>
         <div id="syncStatus" class="sync-status"></div>
     </div>
 </div>
 
 <script>
-    // 管理员账号
     const ADMIN_USER = "徐迎博";
     const ADMIN_PASS = "xybLOVEzzt";
     
-    // ==================== 云端配置 ====================
-    const CLOUD_URL = "https://api.jsonsilo.com/public/73db744e-0d66-4a3d-b4e0-78f97e9f6118";
+    // ==================== 云端配置（和用户端相同）====================
+    const CLOUD_URL = "https://jsonbase.com/s/67f9e8d4c3b2a1e5d6c7b8a9";
 
     function showStatus(msg, isError = false) {
         const el = document.getElementById('syncStatus');
@@ -98,7 +60,6 @@
         }
     }
 
-    // 从云端加载
     async function loadFromCloud() {
         try {
             const response = await fetch(CLOUD_URL);
@@ -107,67 +68,46 @@
             return data.messages || [];
         } catch (error) {
             console.error('加载失败:', error);
-            showStatus('云端连接失败', true);
             return [];
         }
     }
 
-    // 加载并显示消息
     async function loadMessages() {
         const container = document.getElementById('messagesList');
         if (!container) return;
-        
         container.innerHTML = '<div style="text-align:center; padding:40px;">🔄 加载中...</div>';
         showStatus('正在同步...');
-
         const allMessages = await loadFromCloud();
         const zztMessages = allMessages.filter(msg => msg.username === "朱籽橦");
         zztMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
         document.getElementById('totalCount').innerText = zztMessages.length;
-
         if (zztMessages.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">💬 暂无留言</div>';
             showStatus('暂无新留言');
             return;
         }
-
         let html = '';
         for (let msg of zztMessages) {
-            html += `
-                <div class="message-card">
-                    <div class="message-time">📅 ${msg.date || '未知时间'}</div>
-                    <div class="message-content">${escapeHtml(msg.content)}</div>
-                </div>
-            `;
+            html += `<div class="message-card"><div class="message-time">📅 ${msg.date || '未知时间'}</div><div class="message-content">${escapeHtml(msg.content)}</div></div>`;
         }
         container.innerHTML = html;
         showStatus(`✅ 已加载 ${zztMessages.length} 条留言`);
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
-    // 登录
     function adminLogin() {
         const username = document.getElementById('adminUser').value.trim();
         const password = document.getElementById('adminPwd').value.trim();
         const errorDiv = document.getElementById('loginError');
-
         if (username === ADMIN_USER && password === ADMIN_PASS) {
             errorDiv.style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
             loadMessages();
-            
             if (window.autoRefresh) clearInterval(window.autoRefresh);
             window.autoRefresh = setInterval(() => {
-                if (document.getElementById('adminPanel').style.display === 'block') {
-                    loadMessages();
-                }
+                if (document.getElementById('adminPanel').style.display === 'block') loadMessages();
             }, 30000);
         } else {
             errorDiv.style.display = 'block';

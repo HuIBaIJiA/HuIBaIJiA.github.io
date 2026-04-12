@@ -5,14 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>管理员端 - 爱心留言板</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
         .login-box, .admin-panel {
             background: white;
             border-radius: 20px;
@@ -20,10 +27,22 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             margin-top: 50px;
         }
-        h2 { text-align: center; color: #764ba2; margin-bottom: 30px; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+        h2 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 30px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
         button {
-            width: 100%; padding: 15px;
+            width: 100%;
+            padding: 15px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
@@ -40,21 +59,42 @@
             margin-bottom: 20px;
             border-left: 5px solid #764ba2;
         }
-        .message-time { color: #666; font-size: 14px; margin-bottom: 10px; }
-        .message-content { font-size: 16px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .message-time {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .message-content {
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
         .stats {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background: #f0f0f0;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .error { color: red; text-align: center; margin-top: 15px; display: none; }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
         .back-btn {
             background: #6c757d;
             margin-top: 0;
             margin-bottom: 20px;
+        }
+        .refresh-btn {
+            width: auto;
+            padding: 8px 20px;
+            margin: 0;
+            background: #28a745;
         }
         .sync-status {
             text-align: center;
@@ -81,12 +121,12 @@
         <h2>💌 来自朱籽橦的留言</h2>
         <div class="stats">
             <span>📊 总留言数：<strong id="totalCount">0</strong></span>
-            <span>🔄 <button onclick="loadMessages()" style="width:auto; padding:5px 15px; margin:0;">刷新</button></span>
+            <button class="refresh-btn" onclick="loadMessages()">🔄 刷新</button>
         </div>
         <div id="messagesList">
-            <div style="text-align:center; padding:40px; color:#999;">暂无留言，等待第一条...</div>
+            <div style="text-align:center; padding:40px; color:#999;">暂无留言</div>
         </div>
-        <div class="sync-status" id="syncStatus"></div>
+        <div id="syncStatus" class="sync-status"></div>
     </div>
 </div>
 
@@ -94,24 +134,24 @@
     // 管理员账号
     const ADMIN_USER = "徐迎博";
     const ADMIN_PASS = "xybLOVEzzt";
+    let BIN_ID = null;
 
-    // JSONBin 配置（与用户端共用同一个 Bin）
-    let BIN_ID = localStorage.getItem('sync_bin_id');
-
-    // 显示状态消息
+    // 显示状态
     function showStatus(msg, isError = false) {
         const el = document.getElementById('syncStatus');
         if (el) {
             el.textContent = msg;
             el.style.color = isError ? 'red' : '#4CAF50';
-            setTimeout(() => { el.textContent = ''; }, 3000);
+            setTimeout(() => {
+                if (el) el.textContent = '';
+            }, 3000);
         }
     }
 
-    // 从云端加载消息
+    // 从云端加载
     async function loadFromCloud() {
+        BIN_ID = localStorage.getItem('sync_bin_id');
         if (!BIN_ID) {
-            // 如果没有 Bin ID，说明用户端还没创建过
             return [];
         }
         try {
@@ -119,15 +159,14 @@
             if (!response.ok) {
                 if (response.status === 404) {
                     localStorage.removeItem('sync_bin_id');
-                    BIN_ID = null;
                 }
                 return [];
             }
             const data = await response.json();
             return data.record.messages || [];
         } catch (error) {
-            console.error('云端加载失败:', error);
-            showStatus('云端连接失败，请检查网络', true);
+            console.error('加载失败:', error);
+            showStatus('云端连接失败', true);
             return [];
         }
     }
@@ -136,20 +175,20 @@
     async function loadMessages() {
         const container = document.getElementById('messagesList');
         if (!container) return;
-
+        
         container.innerHTML = '<div style="text-align:center; padding:40px;">🔄 加载中...</div>';
         showStatus('正在同步云端...');
 
         const allMessages = await loadFromCloud();
-        // 只显示朱籽橦发送的消息
+        // 只显示朱籽橦的消息
         const zztMessages = allMessages.filter(msg => msg.username === "朱籽橦");
-        // 按时间倒序（新的在前）
+        // 按时间倒序
         zztMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         document.getElementById('totalCount').innerText = zztMessages.length;
 
         if (zztMessages.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">💬 暂无留言，等待第一条...</div>';
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">💬 暂无留言</div>';
             showStatus('暂无新留言');
             return;
         }
@@ -167,13 +206,14 @@
         showStatus(`✅ 已加载 ${zztMessages.length} 条留言`);
     }
 
+    // 防XSS攻击
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // 登录逻辑
+    // 管理员登录
     function adminLogin() {
         const username = document.getElementById('adminUser').value.trim();
         const password = document.getElementById('adminPwd').value.trim();
@@ -183,15 +223,16 @@
             errorDiv.style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
-            // 尝试从本地读取 Bin ID
+            
             BIN_ID = localStorage.getItem('sync_bin_id');
             if (!BIN_ID) {
-                document.getElementById('messagesList').innerHTML = '<div style="text-align:center; padding:40px;">⚠️ 尚未有任何云端数据，请朱籽橦先发送一条消息。</div>';
+                document.getElementById('messagesList').innerHTML = '<div style="text-align:center; padding:40px;">⚠️ 请先在用户端发送一条消息创建云端存储</div>';
                 document.getElementById('totalCount').innerText = '0';
             } else {
                 loadMessages();
             }
-            // 每隔30秒自动刷新
+            
+            // 每30秒自动刷新
             if (window.autoRefresh) clearInterval(window.autoRefresh);
             window.autoRefresh = setInterval(() => {
                 if (document.getElementById('adminPanel').style.display === 'block') {
@@ -203,6 +244,7 @@
         }
     }
 
+    // 退出登录
     function logout() {
         if (window.autoRefresh) clearInterval(window.autoRefresh);
         document.getElementById('adminPanel').style.display = 'none';

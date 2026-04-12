@@ -86,9 +86,8 @@
     const ADMIN_USER = "徐迎博";
     const ADMIN_PASS = "xybLOVEzzt";
     
-    // GitHub Gist 配置（和用户端相同）
-    const GIST_ID = "46fe8095a238484efdb1bb7905c5f237";
-    const GITHUB_TOKEN = "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";
+    // ==================== 云端配置 ====================
+    const CLOUD_URL = "https://api.jsonsilo.com/public/73db744e-0d66-4a3d-b4e0-78f97e9f6118";
 
     function showStatus(msg, isError = false) {
         const el = document.getElementById('syncStatus');
@@ -102,13 +101,10 @@
     // 从云端加载
     async function loadFromCloud() {
         try {
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-            });
-            if (!response.ok) throw new Error('加载失败');
-            const gist = await response.json();
-            const content = JSON.parse(gist.files['love-messages.json'].content);
-            return content.messages || [];
+            const response = await fetch(CLOUD_URL);
+            if (!response.ok) return [];
+            const data = await response.json();
+            return data.messages || [];
         } catch (error) {
             console.error('加载失败:', error);
             showStatus('云端连接失败', true);

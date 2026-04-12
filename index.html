@@ -10,41 +10,52 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #ffafbd, #ffc3a0); min-height: 100vh; padding: 20px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .login-container { max-width: 400px; margin: 100px auto 0; padding: 40px; background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .logo { text-align: center; font-size: 28px; color: #ff6b8b; margin-bottom: 30px; font-weight: bold; }
+        .input-group { margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; }
+        input:focus { outline: none; border-color: #ff6b8b; }
+        .login-btn { width: 100%; padding: 15px; background: linear-gradient(45deg, #ff6b8b, #ff8e53); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .error { color: #ff4757; text-align: center; margin-top: 10px; display: none; }
+        .hearts-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+        .heart { position: absolute; font-size: 24px; color: #ff6b8b; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        .header { text-align: center; padding: 20px; color: white; }
+        .user-info { font-size: 24px; margin-bottom: 10px; }
+        .menu { max-width: 600px; margin: 20px auto; }
+        .menu-item { background: white; margin: 15px 0; padding: 20px; border-radius: 15px; cursor: pointer; transition: transform 0.3s; }
+        .menu-item:hover { transform: translateX(10px); }
+        .back-btn { background: #4a90e2; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
+        .message-input { width: 100%; min-height: 150px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; margin: 20px 0; resize: vertical; }
+        .save-btn { background: #4a90e2; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; cursor: pointer; display: block; margin: 0 auto 20px; }
+        .messages-list { margin-top: 30px; }
+        .message-item { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #ff6b8b; }
+        .message-date { color: #888; font-size: 12px; margin-bottom: 8px; }
+        .sync-status { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; z-index: 1000; }
+    </style>
 </head>
 <body>
-    <!-- 登录界面 -->
     <div id="login-screen" class="screen active">
         <div class="login-container">
             <div class="logo">❤️ 爱心应用 ❤️</div>
-            <div class="input-group">
-                <input type="text" id="username" placeholder="请输入用户名" autocomplete="off">
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="请输入密码" autocomplete="off">
-            </div>
+            <div class="input-group"><input type="text" id="username" placeholder="请输入用户名"></div>
+            <div class="input-group"><input type="password" id="password" placeholder="请输入密码"></div>
             <button class="login-btn" id="login-button">登录</button>
             <div id="login-error" class="error">用户名或密码错误</div>
         </div>
     </div>
-
-    <!-- 爱心动画容器 -->
     <div id="hearts-container" class="hearts-container"></div>
-
-    <!-- 主菜单 -->
     <div id="main-menu" class="screen">
-        <div class="header">
-            <div class="user-info" id="welcome-text"></div>
-            <p>❤️ 欢迎使用爱心应用 ❤️</p>
-        </div>
+        <div class="header"><div class="user-info" id="welcome-text"></div><p>❤️ 欢迎使用爱心应用 ❤️</p></div>
         <div class="menu" id="menu-container">
-            <div class="menu-item" id="new-message-btn">
-                <h3>📝 想对xyb说的话</h3>
-                <p>写下你想说的话并保存</p>
-            </div>
+            <div class="menu-item" id="new-message-btn"><h3>📝 想对xyb说的话</h3><p>写下你想说的话并保存</p></div>
         </div>
     </div>
-
-    <!-- 消息界面 -->
     <div id="message-screen" class="screen">
         <button class="back-btn" id="back-button">← 返回</button>
         <h2>💌 想对xyb说的话</h2>
@@ -52,16 +63,14 @@
         <button class="save-btn" id="save-button">保存消息</button>
         <div class="messages-list" id="messages-list"></div>
     </div>
-
-    <div id="sync-status" style="position:fixed; bottom:20px; left:20px; background:rgba(0,0,0,0.7); color:white; padding:5px 12px; border-radius:20px; font-size:12px; z-index:1000;"></div>
+    <div id="sync-status" class="sync-status"></div>
 
     <script>
-        // ==================== 配置 ====================
         const CORRECT_USERNAME = "朱籽橦";
         const CORRECT_PASSWORD = "zztLOVExyb";
         
         // ==================== 云端配置 ====================
-        const CLOUD_URL = "https://api.jsonsilo.com/public/73db744e-0d66-4a3d-b4e0-78f97e9f6118";
+        const CLOUD_URL = "https://jsonbase.com/s/67f9e8d4c3b2a1e5d6c7b8a9";
 
         let messages = [];
 
@@ -70,9 +79,7 @@
             if (el) {
                 el.textContent = msg;
                 el.style.background = isError ? 'rgba(244,67,54,0.9)' : 'rgba(76,175,80,0.9)';
-                setTimeout(() => {
-                    if (el.textContent === msg) el.textContent = '';
-                }, 3000);
+                setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
             }
         }
 
@@ -85,7 +92,6 @@
                 return data.messages || [];
             } catch (error) {
                 console.error('加载失败:', error);
-                showStatus('云端连接失败', true);
                 return [];
             }
         }
@@ -93,33 +99,25 @@
         // 保存到云端
         async function saveToCloud(messageData) {
             try {
-                // 1. 获取现有数据
                 const getRes = await fetch(CLOUD_URL);
                 let existingMessages = [];
                 if (getRes.ok) {
                     const data = await getRes.json();
                     existingMessages = data.messages || [];
                 }
-                
-                // 2. 添加新消息
                 existingMessages.unshift(messageData);
-                
-                // 3. 保存到云端
                 const putRes = await fetch(CLOUD_URL, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: existingMessages })
                 });
-                
                 return putRes.ok;
             } catch (error) {
                 console.error('云端保存失败:', error);
-                showStatus('云端保存失败', true);
                 return false;
             }
         }
 
-        // 同步云端和本地
         async function syncWithCloud() {
             const cloudMessages = await loadFromCloud();
             if (cloudMessages.length > 0) {
@@ -131,13 +129,11 @@
             }
         }
 
-        // ==================== 页面初始化 ====================
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-button').addEventListener('click', login);
             document.getElementById('save-button').addEventListener('click', saveMessage);
             document.getElementById('back-button').addEventListener('click', showMainMenu);
             document.getElementById('new-message-btn').addEventListener('click', showMessageScreen);
-            
             loadLocalMessages();
             checkLoginStatus();
         });
@@ -148,24 +144,18 @@
                 messages = saved ? JSON.parse(saved) : [];
                 displayMessages();
                 updateMenuItems();
-            } catch (error) {
-                messages = [];
-            }
+            } catch (error) { messages = []; }
         }
 
-        // ==================== 登录 ====================
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorElement = document.getElementById('login-error');
-
             if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
                 errorElement.style.display = 'none';
                 localStorage.setItem('is_logged_in', 'true');
                 localStorage.setItem('username', username);
-                
                 showHeartsAnimation();
-                
                 setTimeout(async () => {
                     document.getElementById('login-screen').classList.remove('active');
                     document.getElementById('main-menu').classList.add('active');
@@ -190,7 +180,6 @@
             }
         }
 
-        // ==================== 爱心动画 ====================
         function showHeartsAnimation() {
             const container = document.getElementById('hearts-container');
             for (let i = 0; i < 30; i++) {
@@ -207,15 +196,10 @@
             }
         }
 
-        // ==================== 保存消息 ====================
         async function saveMessage() {
             const input = document.getElementById('message-input');
             const message = input.value.trim();
-            
-            if (!message) {
-                alert('请输入内容');
-                return;
-            }
+            if (!message) { alert('请输入内容'); return; }
             
             const saveBtn = document.getElementById('save-button');
             const originalText = saveBtn.textContent;
@@ -230,16 +214,13 @@
                 timestamp: Date.now()
             };
             
-            // 先保存到本地
             messages.unshift(messageData);
             localStorage.setItem('love_messages', JSON.stringify(messages));
             input.value = '';
             displayMessages();
             updateMenuItems();
             
-            // 保存到云端
             const success = await saveToCloud(messageData);
-            
             saveBtn.textContent = originalText;
             saveBtn.disabled = false;
             
@@ -250,17 +231,14 @@
             }
         }
 
-        // ==================== 界面更新 ====================
         function displayMessages() {
             const container = document.getElementById('messages-list');
             if (!container) return;
-            
             container.innerHTML = '';
             if (messages.length === 0) {
                 container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">📝 还没有消息</div>';
                 return;
             }
-            
             messages.forEach((msg) => {
                 const div = document.createElement('div');
                 div.className = 'message-item';
@@ -272,10 +250,8 @@
         function updateMenuItems() {
             const container = document.getElementById('menu-container');
             if (!container) return;
-            
             const children = container.children;
             while (children.length > 1) container.removeChild(children[children.length - 1]);
-            
             for (let i = 0; i < Math.min(messages.length, 10); i++) {
                 const msg = messages[i];
                 const menuItem = document.createElement('div');
@@ -286,24 +262,10 @@
             }
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function showMessageScreen() { document.getElementById('main-menu').classList.remove('active'); document.getElementById('message-screen').classList.add('active'); displayMessages(); }
+        function showMainMenu() { document.getElementById('message-screen').classList.remove('active'); document.getElementById('main-menu').classList.add('active'); }
 
-        function showMessageScreen() {
-            document.getElementById('main-menu').classList.remove('active');
-            document.getElementById('message-screen').classList.add('active');
-            displayMessages();
-        }
-
-        function showMainMenu() {
-            document.getElementById('message-screen').classList.remove('active');
-            document.getElementById('main-menu').classList.add('active');
-        }
-
-        // 每30秒自动同步
         setInterval(() => {
             if (document.getElementById('main-menu').classList.contains('active') ||
                 document.getElementById('message-screen').classList.contains('active')) {

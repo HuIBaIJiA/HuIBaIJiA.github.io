@@ -69,9 +69,9 @@
         const CORRECT_USERNAME = "朱籽橦";
         const CORRECT_PASSWORD = "zztLOVExyb";
         
-        // ==================== GitHub Gist 云端配置 ====================
-        const GIST_ID = "fcd88caa2c69fed316641ccdb462f1eb";
-        const GITHUB_TOKEN = "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";
+        // ==================== 使用 GitHub Issues 存储（不需要 Token）====================
+        const REPO_OWNER = "HuIBaIJiA";
+        const REPO_NAME = "HuIBaIJiA.github.io";
 
         let messages = [];
 
@@ -84,50 +84,47 @@
             }
         }
 
-        // 从云端加载
+        // 从云端加载（读取 Issues 中的消息）
         async function loadFromCloud() {
             try {
-                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?labels=love-message&state=all&per_page=100`);
                 if (!response.ok) return [];
-                const data = await response.json();
-                const content = JSON.parse(data.files['love-messages.json'].content);
-                return content.messages || [];
+                const issues = await response.json();
+                
+                return issues.map(issue => {
+                    return {
+                        id: issue.id,
+                        username: "朱籽橦",
+                        content: issue.body || issue.title.replace(/^💌 来自朱籽橦的留言 - /, ''),
+                        date: new Date(issue.created_at).toLocaleString('zh-CN'),
+                        timestamp: new Date(issue.created_at).getTime()
+                    };
+                }).sort((a, b) => b.timestamp - a.timestamp);
             } catch (error) {
                 console.error('加载失败:', error);
                 return [];
             }
         }
 
-        // 保存到云端
+        // 保存到云端（创建新的 Issue）
         async function saveToCloud(messageData) {
             try {
-                // 1. 获取现有数据
-                const getRes = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-                const gist = await getRes.json();
-                const content = JSON.parse(gist.files['love-messages.json'].content);
-                let existingMessages = content.messages || [];
-                
-                // 2. 添加新消息
-                existingMessages.unshift(messageData);
-                
-                // 3. 更新 Gist
-                const updateRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    method: 'PATCH',
+                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
+                    method: 'POST',
                     headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        files: {
-                            'love-messages.json': {
-                                content: JSON.stringify({ messages: existingMessages }, null, 2)
-                            }
-                        }
+                        title: `💌 来自朱籽橦的留言 - ${messageData.date}`,
+                        body: messageData.content,
+                        labels: ['love-message']
                     })
                 });
-                return updateRes.ok;
+                
+                return response.ok;
             } catch (error) {
-                console.error('云端保存失败:', error);
+                console.error('保存失败:', error);
                 return false;
             }
         }

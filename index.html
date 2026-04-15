@@ -3,13 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>爱心应用</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="assets/icons/icon-192.png">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #ffafbd, #ffc3a0); min-height: 100vh; padding: 20px; }
@@ -69,11 +63,8 @@
         const CORRECT_USERNAME = "朱籽橦";
         const CORRECT_PASSWORD = "zztLOVExyb";
         
-        // ==================== 使用 GitHub JSON 文件存储 ====================
-        // 注意：由于 GitHub API 写入需要 Token，这里只实现读取功能
-        // 写入功能暂时保存到本地，管理员通过查看 GitHub Issues 或 JSON 文件手动查看
-        
-        const JSON_FILE_URL = "https://raw.githubusercontent.com/HuIBaIJiA/HuIBaIJiA.github.io/main/messages.json";
+        // ==================== 云端 API 配置 ====================
+        const CLOUD_URL = "https://zzt.xyb1105.workers.dev";
 
         let messages = [];
 
@@ -86,34 +77,35 @@
             }
         }
 
-        // 从云端读取 JSON 文件
         async function loadFromCloud() {
             try {
-                const response = await fetch(JSON_FILE_URL + '?t=' + Date.now());
+                const response = await fetch(CLOUD_URL);
                 if (!response.ok) return [];
-                const data = await response.json();
-                return data.messages || [];
+                return await response.json();
             } catch (error) {
                 console.error('加载失败:', error);
                 return [];
             }
         }
 
-        // 保存消息（由于 GitHub API 写入需要 Token，暂时只保存到本地）
         async function saveToCloud(messageData) {
-            // 提示用户：消息已保存到本地，管理员需要手动查看 GitHub 仓库
-            console.log('消息已保存到本地:', messageData);
-            showStatus('消息已保存到本地', false);
-            return true; // 模拟成功
+            try {
+                const response = await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(messageData)
+                });
+                return response.ok;
+            } catch (error) {
+                console.error('保存失败:', error);
+                return false;
+            }
         }
 
         async function syncWithCloud() {
             const cloudMessages = await loadFromCloud();
             if (cloudMessages.length > 0) {
-                // 合并云端和本地消息（去重）
-                const existingIds = new Set(messages.map(m => m.id));
-                const newMessages = cloudMessages.filter(m => !existingIds.has(m.id));
-                messages = [...newMessages, ...messages];
+                messages = cloudMessages;
                 localStorage.setItem('love_messages', JSON.stringify(messages));
                 displayMessages();
                 updateMenuItems();
@@ -206,18 +198,24 @@
                 timestamp: Date.now()
             };
             
+            // 先保存到本地
             messages.unshift(messageData);
             localStorage.setItem('love_messages', JSON.stringify(messages));
             input.value = '';
             displayMessages();
             updateMenuItems();
             
-            await saveToCloud(messageData);
+            // 保存到云端
+            const success = await saveToCloud(messageData);
             
             saveBtn.textContent = originalText;
             saveBtn.disabled = false;
             
-            alert('💌 消息已保存到本地！\n\n管理员可以通过 GitHub 仓库查看 messages.json 文件。');
+            if (success) {
+                alert('💌 消息已保存并同步到云端！');
+            } else {
+                alert('💾 消息已保存到本地，网络恢复后会自动同步');
+            }
         }
 
         function displayMessages() {

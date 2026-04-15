@@ -198,24 +198,26 @@
                 timestamp: Date.now()
             };
             
-            // 先保存到本地
-            messages.unshift(messageData);
-            localStorage.setItem('love_messages', JSON.stringify(messages));
-            input.value = '';
-            displayMessages();
-            updateMenuItems();
-            
-            // 保存到云端
+            // 先保存到云端
             const success = await saveToCloud(messageData);
+            
+            if (success) {
+                // 刷新本地消息
+                await syncWithCloud();
+                input.value = '';
+                alert('💌 消息已保存并同步到云端！');
+            } else {
+                // 保存到本地作为备份
+                messages.unshift(messageData);
+                localStorage.setItem('love_messages', JSON.stringify(messages));
+                input.value = '';
+                displayMessages();
+                updateMenuItems();
+                alert('💾 消息已保存到本地，网络恢复后会自动同步');
+            }
             
             saveBtn.textContent = originalText;
             saveBtn.disabled = false;
-            
-            if (success) {
-                alert('💌 消息已保存并同步到云端！');
-            } else {
-                alert('💾 消息已保存到本地，网络恢复后会自动同步');
-            }
         }
 
         function displayMessages() {
